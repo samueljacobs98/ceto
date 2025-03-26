@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
-import config from "./config";
+import config from "../config";
 
+// @ts-expect-error - TS7017
 let cached = global.mongoose;
 
 if (!cached) {
+  // @ts-expect-error - TS7017
   cached = global.mongoose = { conn: null, promise: null };
 }
 
