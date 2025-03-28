@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { ArrowUpDown, FilterIcon } from "lucide-react";
+import { ArrowUpDown, FilterIcon, RotateCcwIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
@@ -46,7 +46,11 @@ export function DataTable() {
   const searchParams = useSearchParams();
 
   const updateSearchParams = useCallback(
-    (name: string, value: string, searchParams: URLSearchParams) => {
+    (
+      name: string,
+      value: string,
+      searchParams: URLSearchParams = new URLSearchParams()
+    ) => {
       const params = new URLSearchParams(searchParams);
       params.set(name, value);
 
@@ -168,12 +172,8 @@ export function DataTable() {
     };
 
   const handleSortBy = (sortByKey: string) => () => {
-    const resetPageSearchParams = updateSearchParams(
-      "pageNumber",
-      "1",
-      searchParams
-    );
-    setFilters((prev) => ({ ...prev, page: 1 }));
+    const resetPageSearchParams = updateSearchParams("pageNumber", "1");
+    setFilters((prev) => ({ ...prev, pageNumber: 1 }));
 
     if (sortBy?.startsWith(sortByKey) && sortBy.endsWith("desc")) {
       router.push(
@@ -195,9 +195,23 @@ export function DataTable() {
     );
   };
 
+  const handleReset = () => {
+    const resetPageSearchParams = updateSearchParams("pageNumber", "1");
+    const searchParams = filters.pageSize
+      ? updateSearchParams(
+          "pageSize",
+          `${filters.pageSize}`,
+          resetPageSearchParams
+        )
+      : resetPageSearchParams;
+
+    setFilters(({ pageSize }) => ({ pageNumber: 1, pageSize }));
+    router.push(pathname + "?" + searchParams.toString());
+  };
+
   return (
     <div className="w-full px-4">
-      <div className="flex gap-x-4 items-center justify-end py-4">
+      <div className="flex gap-x-2 items-center justify-end py-4">
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="icon">
@@ -254,6 +268,14 @@ export function DataTable() {
             </ul>
           </PopoverContent>
         </Popover>
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          size="icon"
+          className="rounded-full size-8"
+        >
+          <RotateCcwIcon />
+        </Button>
       </div>
       <div className="rounded-md border">
         <Table>
