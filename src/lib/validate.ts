@@ -4,7 +4,7 @@ export function validateGetVessels(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const sortBy = searchParams.get("sortBy");
-  const pageNumber = searchParams.get("page");
+  const pageNumber = searchParams.get("pageNumber");
   const pageSize = searchParams.get("pageSize");
   const imoNumber = searchParams.get("imoNumber");
   const name = searchParams.get("name");

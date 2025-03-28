@@ -8,7 +8,7 @@ export type Vessel = InferSchemaType<typeof VesselSchema> & { id: string };
 
 export type VesselParams = {
   sortBy?: Nullish<string>;
-  page?: number;
+  pageNumber?: Nullish<number>;
   pageSize?: Nullish<number>;
   imoNumber?: Nullish<string>;
   name?: Nullish<string>;

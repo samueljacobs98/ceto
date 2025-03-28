@@ -68,7 +68,7 @@ export function DataTable() {
   const { sortBy, ...derivedFilters } = useMemo<VesselParams>(() => {
     const sortBy = searchParams.get("sortBy");
 
-    const page = parseToInteger(searchParams.get("page"), 1);
+    const pageNumber = parseToInteger(searchParams.get("pageNumber"), 1);
     const pageSize = parseToInteger(
       searchParams.get("pageSize"),
       DEFAULT_PAGE_SIZE
@@ -79,7 +79,15 @@ export function DataTable() {
     const flag = searchParams.get("flag");
     // const tags = searchParams.getAll("tags");
 
-    return { sortBy, page, pageSize, imoNumber, name, internalName, flag };
+    return {
+      sortBy,
+      pageNumber,
+      pageSize,
+      imoNumber,
+      name,
+      internalName,
+      flag,
+    };
   }, [searchParams]);
 
   const [filters, setFilters] = useState({ ...derivedFilters });
@@ -99,31 +107,34 @@ export function DataTable() {
   );
 
   const canGetPreviousPage = useMemo(
-    () => filters?.page && filters.page > 1,
-    [filters.page]
+    () => filters?.pageNumber && filters.pageNumber > 1,
+    [filters?.pageNumber]
   );
 
-  const canGetNextPage = useMemo(
-    () => filters?.page && filters.page < pagesCount,
-    [filters.page, pagesCount]
-  );
+  const canGetNextPage = useMemo(() => {
+    return filters?.pageNumber && filters.pageNumber < pagesCount;
+  }, [filters?.pageNumber, pagesCount]);
 
-  const updatePage = (page: number) => {
-    setFilters((prev) => ({ ...prev, page }));
+  const updatePage = (pageNumber: number) => {
+    setFilters((prev) => ({ ...prev, pageNumber }));
     router.push(
       pathname +
         "?" +
-        updateSearchParams("page", `${page}`, searchParams).toString()
+        updateSearchParams(
+          "pageNumber",
+          `${pageNumber}`,
+          searchParams
+        ).toString()
     );
   };
 
   const getPreviousPage = () => {
-    const page = Math.max(1, (filters?.page || 1) - 1);
+    const page = Math.max(1, (filters?.pageNumber || 1) - 1);
     updatePage(page);
   };
 
   const getNextPage = () => {
-    const nextPage = (filters?.page || 1) + 1;
+    const nextPage = (filters?.pageNumber || 1) + 1;
     const page = Math.min(pagesCount, nextPage);
     updatePage(page);
   };
@@ -133,7 +144,7 @@ export function DataTable() {
     (e: ChangeEvent<HTMLInputElement> | string) => {
       const value = typeof e === "string" ? e : e.target.value;
       const resetPageSearchParams = updateSearchParams(
-        "page",
+        "pageNumber",
         "1",
         searchParams
       );
@@ -157,7 +168,11 @@ export function DataTable() {
     };
 
   const handleSortBy = (sortByKey: string) => () => {
-    const resetPageSearchParams = updateSearchParams("page", "1", searchParams);
+    const resetPageSearchParams = updateSearchParams(
+      "pageNumber",
+      "1",
+      searchParams
+    );
     setFilters((prev) => ({ ...prev, page: 1 }));
 
     if (sortBy?.startsWith(sortByKey) && sortBy.endsWith("desc")) {
@@ -289,17 +304,34 @@ export function DataTable() {
           </TableHeader>
           <TableBody>
             {data?.activeVessels.length ? (
-              data?.activeVessels.map(
-                ({ id, imoNumber, name, internalName, particulars, tags }) => (
-                  <TableRow key={id}>
-                    <TableCell>{imoNumber}</TableCell>
-                    <TableCell>{name}</TableCell>
-                    <TableCell>{internalName}</TableCell>
-                    <TableCell>{particulars?.flag}</TableCell>
-                    <TableCell>{tags?.join(", ")}</TableCell>
+              <>
+                {data?.activeVessels.map(
+                  ({
+                    id,
+                    imoNumber,
+                    name,
+                    internalName,
+                    particulars,
+                    tags,
+                  }) => (
+                    <TableRow key={id}>
+                      <TableCell>{imoNumber}</TableCell>
+                      <TableCell>{name}</TableCell>
+                      <TableCell>{internalName}</TableCell>
+                      <TableCell>{particulars?.flag}</TableCell>
+                      <TableCell>{tags?.join(", ")}</TableCell>
+                    </TableRow>
+                  )
+                )}
+                {data?.activeVessels.length <
+                  (filters?.pageSize ?? DEFAULT_PAGE_SIZE) && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No more results.
+                    </TableCell>
                   </TableRow>
-                )
-              )
+                )}
+              </>
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
@@ -314,7 +346,7 @@ export function DataTable() {
         <div></div>
         <div className="flex gap-x-2 justify-self-center">
           <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {filters?.page || 1} of {filters.pageSize}
+            Page {filters?.pageNumber || 1} of {pagesCount}
           </div>
           <div className="space-x-2">
             <Button
