@@ -20,7 +20,15 @@ export default async function Page({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DataTable />
+      <main className="py-6 px-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Vessel Data</h1>
+          <p className="text-base text-muted-foreground">
+            Explore live vessel data
+          </p>
+        </div>
+        <DataTable />
+      </main>
     </HydrationBoundary>
   );
 }

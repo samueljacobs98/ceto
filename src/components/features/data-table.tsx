@@ -282,7 +282,7 @@ function useDataTableContext() {
 export function DataTable() {
   return (
     <DataTableProvider>
-      <div className="w-full px-4">
+      <div className="w-full">
         <DataTableToolbar />
         <div className="rounded-md border">
           <Table>
