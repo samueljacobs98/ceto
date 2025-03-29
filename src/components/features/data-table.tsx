@@ -2,7 +2,10 @@
 
 import {
   ChangeEvent,
+  createContext,
+  ReactNode,
   useCallback,
+  useContext,
   useDeferredValue,
   useMemo,
   useState,
@@ -13,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getVesselData } from "@/lib/api/requests";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
-import type { VesselParams } from "@/lib/types";
+import type { Vessel, VesselParams } from "@/lib/types";
 import { parseToInteger } from "@/lib/utils";
 
 import { Input } from "@/components/ui/input";
@@ -40,7 +43,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function DataTable() {
+const DataTableContext = createContext<
+  | {
+      data:
+        | {
+            activeVessels: Vessel[];
+            meta: {
+              total: number;
+              limit: number;
+            };
+          }
+        | undefined;
+      filters: Omit<VesselParams, "sortBy">;
+      pagesCount: number;
+      canGetPreviousPage: boolean;
+      canGetNextPage: boolean;
+      handleFilter: (
+        key: keyof Omit<VesselParams, "sortBy">
+      ) => (e: ChangeEvent<HTMLInputElement> | string) => void;
+      handleSortBy: (sortByKey: string) => () => void;
+      handleReset: () => void;
+      getPreviousPage: () => void;
+      getNextPage: () => void;
+    }
+  | undefined
+>(undefined);
+
+function DataTableProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -80,7 +109,7 @@ export function DataTable() {
     const imoNumber = searchParams.get("imoNumber");
     const name = searchParams.get("name");
     const internalName = searchParams.get("internalName");
-    const flag = searchParams.get("flag");
+    const flag = searchParams.get("particulars.flag");
     // const tags = searchParams.getAll("tags");
 
     return {
@@ -111,12 +140,12 @@ export function DataTable() {
   );
 
   const canGetPreviousPage = useMemo(
-    () => filters?.pageNumber && filters.pageNumber > 1,
+    () => Boolean(filters?.pageNumber && filters.pageNumber > 1),
     [filters?.pageNumber]
   );
 
   const canGetNextPage = useMemo(() => {
-    return filters?.pageNumber && filters.pageNumber < pagesCount;
+    return Boolean(filters?.pageNumber && filters.pageNumber < pagesCount);
   }, [filters?.pageNumber, pagesCount]);
 
   const updatePage = (pageNumber: number) => {
@@ -210,203 +239,271 @@ export function DataTable() {
   };
 
   return (
-    <div className="w-full px-4">
-      <div className="flex gap-x-2 items-center justify-end py-4">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="icon">
-              <FilterIcon />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 mr-4" sideOffset={10}>
-            <ul className="space-y-4">
-              <li className="space-y-2">
-                <Label htmlFor="imoNumber" className="font-semibold pl-2">
-                  IMO Number
-                </Label>
-                <Input
-                  id="imoNumber"
-                  value={filters.imoNumber ?? ""}
-                  onChange={handleFilter("imoNumber")}
-                  placeholder="9803637"
-                />
-              </li>
-              <li className="space-y-2">
-                <Label htmlFor="name" className="font-semibold pl-2">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  value={filters.name ?? ""}
-                  onChange={handleFilter("name")}
-                  placeholder="SD Tempest"
-                />
-              </li>
-              <li className="space-y-2">
-                <Label htmlFor="internalName" className="font-semibold pl-2">
-                  Internal Name
-                </Label>
-                <Input
-                  id="internalName"
-                  value={filters.internalName ?? ""}
-                  onChange={handleFilter("internalName")}
-                  placeholder="Serco1"
-                />
-              </li>
-              <li className="space-y-2">
-                <Label htmlFor="flag" className="font-semibold pl-2">
-                  Flag
-                </Label>
-                <Input
-                  id="flag"
-                  value={filters.flag ?? ""}
-                  onChange={handleFilter("flag")}
-                  placeholder="GB"
-                />
-              </li>
-              {/* TODO: tags */}
-            </ul>
-          </PopoverContent>
-        </Popover>
-        <Button
-          onClick={handleReset}
-          variant="outline"
-          size="icon"
-          className="rounded-full size-8"
-        >
-          <RotateCcwIcon />
-        </Button>
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={handleSortBy("imoNumber")}
-                  className="pl-2"
-                >
-                  IMO Number
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={handleSortBy("name")}
-                  className="pl-2"
-                >
-                  Name
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={handleSortBy("internalName")}
-                  className="pl-2"
-                >
-                  Internal Name
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={handleSortBy("particulars.flag")}
-                  className="pl-2"
-                >
-                  Flag
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>Tags</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.activeVessels.length ? (
-              <>
-                {data?.activeVessels.map(
-                  ({
-                    id,
-                    imoNumber,
-                    name,
-                    internalName,
-                    particulars,
-                    tags,
-                  }) => (
-                    <TableRow key={id}>
-                      <TableCell>{imoNumber}</TableCell>
-                      <TableCell>{name}</TableCell>
-                      <TableCell>{internalName}</TableCell>
-                      <TableCell>{particulars?.flag}</TableCell>
-                      <TableCell>{tags?.join(", ")}</TableCell>
-                    </TableRow>
-                  )
-                )}
-                {data?.activeVessels.length <
-                  (filters?.pageSize ?? DEFAULT_PAGE_SIZE) && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
-                      No more results.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </>
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="grid grid-cols-3 items-center justify-between space-x-2 py-4">
-        <div></div>
-        <div className="flex gap-x-2 justify-self-center">
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {filters?.pageNumber || 1} of {pagesCount}
-          </div>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={getPreviousPage}
-              disabled={!canGetPreviousPage}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={getNextPage}
-              disabled={!canGetNextPage}
-            >
-              Next
-            </Button>
-          </div>
+    <DataTableContext.Provider
+      value={{
+        data,
+        filters,
+        pagesCount,
+        canGetPreviousPage,
+        canGetNextPage,
+        handleFilter,
+        handleSortBy,
+        handleReset,
+        getPreviousPage,
+        getNextPage,
+      }}
+    >
+      {children}
+    </DataTableContext.Provider>
+  );
+}
+
+function useDataTableContext() {
+  const context = useContext(DataTableContext);
+
+  if (context === undefined) {
+    throw new Error(
+      "useDataTableContext must be used within a DataTableProvider"
+    );
+  }
+
+  return context;
+}
+
+export function DataTable() {
+  return (
+    <DataTableProvider>
+      <div className="w-full px-4">
+        <DataTableToolbar />
+        <div className="rounded-md border">
+          <Table>
+            <DataTableHeader />
+            <DataTableBody />
+          </Table>
         </div>
-        <div className="flex items-center space-x-2 justify-self-end">
-          <p className="text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${filters.pageSize}`}
-            onValueChange={handleFilter("pageSize")}
+        <DataTablePagination />
+      </div>
+    </DataTableProvider>
+  );
+}
+
+function DataTableToolbar() {
+  const { filters, handleFilter, handleReset } = useDataTableContext();
+
+  return (
+    <div className="flex gap-x-2 items-center justify-end py-4">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="icon">
+            <FilterIcon />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 mr-4" sideOffset={10}>
+          <ul className="space-y-4">
+            <li className="space-y-2">
+              <Label htmlFor="imoNumber" className="font-semibold pl-2">
+                IMO Number
+              </Label>
+              <Input
+                id="imoNumber"
+                value={filters.imoNumber ?? ""}
+                onChange={handleFilter("imoNumber")}
+                placeholder="9803637"
+              />
+            </li>
+            <li className="space-y-2">
+              <Label htmlFor="name" className="font-semibold pl-2">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={filters.name ?? ""}
+                onChange={handleFilter("name")}
+                placeholder="SD Tempest"
+              />
+            </li>
+            <li className="space-y-2">
+              <Label htmlFor="internalName" className="font-semibold pl-2">
+                Internal Name
+              </Label>
+              <Input
+                id="internalName"
+                value={filters.internalName ?? ""}
+                onChange={handleFilter("internalName")}
+                placeholder="Serco1"
+              />
+            </li>
+            <li className="space-y-2">
+              <Label htmlFor="flag" className="font-semibold pl-2">
+                Flag
+              </Label>
+              <Input
+                id="flag"
+                value={filters["particulars.flag"] ?? ""}
+                onChange={handleFilter("particulars.flag")}
+                placeholder="GB"
+              />
+            </li>
+            {/* TODO: tags */}
+          </ul>
+        </PopoverContent>
+      </Popover>
+      <Button
+        onClick={handleReset}
+        variant="outline"
+        size="icon"
+        className="rounded-full size-8"
+      >
+        <RotateCcwIcon />
+      </Button>
+    </div>
+  );
+}
+
+function DataTableHeader() {
+  const { handleSortBy } = useDataTableContext();
+
+  return (
+    <TableHeader>
+      <TableRow>
+        <TableHead>
+          <Button
+            variant="ghost"
+            onClick={handleSortBy("imoNumber")}
+            className="pl-2"
           >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[5, 10, 20, 30, 40].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            IMO Number
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </TableHead>
+        <TableHead>
+          <Button
+            variant="ghost"
+            onClick={handleSortBy("name")}
+            className="pl-2"
+          >
+            Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </TableHead>
+        <TableHead>
+          <Button
+            variant="ghost"
+            onClick={handleSortBy("internalName")}
+            className="pl-2"
+          >
+            Internal Name
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </TableHead>
+        <TableHead>
+          <Button
+            variant="ghost"
+            onClick={handleSortBy("particulars.flag")}
+            className="pl-2"
+          >
+            Flag
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        </TableHead>
+        <TableHead>Tags</TableHead>
+      </TableRow>
+    </TableHeader>
+  );
+}
+
+function DataTableBody() {
+  const { data, filters } = useDataTableContext();
+
+  return (
+    <TableBody>
+      {data?.activeVessels.length ? (
+        <>
+          {data?.activeVessels.map(
+            ({ id, imoNumber, name, internalName, particulars, tags }) => (
+              <TableRow key={id}>
+                <TableCell>{imoNumber}</TableCell>
+                <TableCell>{name}</TableCell>
+                <TableCell>{internalName}</TableCell>
+                <TableCell>{particulars?.flag}</TableCell>
+                <TableCell>{tags?.join(", ")}</TableCell>
+              </TableRow>
+            )
+          )}
+          {data?.activeVessels.length <
+            (filters?.pageSize ?? DEFAULT_PAGE_SIZE) && (
+            <TableRow>
+              <TableCell colSpan={5} className="h-24 text-center">
+                No more results.
+              </TableCell>
+            </TableRow>
+          )}
+        </>
+      ) : (
+        <TableRow>
+          <TableCell colSpan={5} className="h-24 text-center">
+            No results.
+          </TableCell>
+        </TableRow>
+      )}
+    </TableBody>
+  );
+}
+
+function DataTablePagination() {
+  const {
+    filters,
+    pagesCount,
+    getPreviousPage,
+    canGetPreviousPage,
+    getNextPage,
+    canGetNextPage,
+    handleFilter,
+  } = useDataTableContext();
+
+  return (
+    <div className="grid grid-cols-3 items-center justify-between space-x-2 py-4">
+      <div></div>
+      <div className="flex gap-x-2 justify-self-center">
+        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+          Page {filters?.pageNumber || 1} of {pagesCount}
         </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={getPreviousPage}
+            disabled={!canGetPreviousPage}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={getNextPage}
+            disabled={!canGetNextPage}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+      <div className="flex items-center space-x-2 justify-self-end">
+        <p className="text-sm font-medium">Rows per page</p>
+        <Select
+          value={`${filters.pageSize}`}
+          onValueChange={handleFilter("pageSize")}
+        >
+          <SelectTrigger className="h-8 w-[70px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent side="top">
+            {[5, 10, 20, 30, 40].map((pageSize) => (
+              <SelectItem key={pageSize} value={`${pageSize}`}>
+                {pageSize}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

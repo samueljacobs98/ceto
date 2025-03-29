@@ -13,6 +13,6 @@ export type VesselParams = {
   imoNumber?: Nullish<string>;
   name?: Nullish<string>;
   internalName?: Nullish<string>;
-  flag?: Nullish<string>;
+  "particulars.flag"?: Nullish<string>;
   //   tags: Nullish<string>[];
 };
