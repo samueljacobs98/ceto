@@ -1,8 +1,11 @@
+import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/lib/state/providers";
+
+import { QueryClientProvider, ThemeProvider } from "@/lib/state/providers";
+
 import { ToggleTheme } from "@/components/ui/toggle-theme";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
       >
         <ThemeProvider
           attribute="class"
@@ -36,7 +39,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ToggleTheme className="absolute bottom-0 right-0 m-2 animate__animated animate__fadeInRight" />
-          {children}
+          <QueryClientProvider>{children}</QueryClientProvider>
+          <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>
     </html>

@@ -1,9 +1,11 @@
 "use client";
 
-import { useTheme } from "@/lib/state/hooks";
-import { Button } from "./button";
-import { MoonIcon, SunIcon } from "lucide-react";
 import { ComponentProps } from "react";
+import { MoonIcon, SunIcon } from "lucide-react";
+
+import { useTheme } from "@/lib/state/hooks";
+
+import { Button } from "./button";
 
 export function ToggleTheme({
   size = "icon",
