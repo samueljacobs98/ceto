@@ -9,5 +9,5 @@ export const getVesselsSchema = z.object({
   imoNumber: z.string().nullish(),
   name: z.string().nullish(),
   internalName: z.string().nullish(),
-  flag: z.string().nullish(),
+  "particulars.flag": z.string().nullish(),
 });

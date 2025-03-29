@@ -18,6 +18,6 @@ export function validateGetVessels(req: Request) {
     imoNumber,
     name,
     internalName,
-    flag,
+    ["particulars.flag"]: flag,
   });
 }

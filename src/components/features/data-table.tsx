@@ -126,7 +126,7 @@ function DataTableProvider({ children }: { children: ReactNode }) {
       imoNumber,
       name,
       internalName,
-      flag,
+      "particulars.flag": flag,
     };
   }, [searchParams]);
 
