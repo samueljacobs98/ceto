@@ -482,10 +482,10 @@ function DataTablePagination() {
   } = useDataTableContext();
 
   return (
-    <div className="grid grid-cols-3 items-center justify-between space-x-2 py-4">
-      <div></div>
-      <div className="flex gap-x-2 justify-self-center">
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 items-center gap-x-2 gap-y-4 py-4">
+      <div className="hidden md:block"></div>
+      <div className="flex gap-x-2 justify-self-center sm:justify-self-start md:justify-self-center">
+        <div className="flex items-center justify-center text-sm font-medium pr-2">
           Page {filters?.pageNumber || 1} of {pagesCount}
         </div>
         <div className="space-x-2">
@@ -507,7 +507,7 @@ function DataTablePagination() {
           </Button>
         </div>
       </div>
-      <div className="flex items-center space-x-2 justify-self-end">
+      <div className="flex items-center gap-2 justify-self-center sm:justify-self-end">
         <p className="text-sm font-medium">Rows per page</p>
         <Select
           value={`${filters.pageSize}`}
