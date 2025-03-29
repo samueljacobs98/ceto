@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { QueryClientProvider, ThemeProvider } from "@/lib/state/providers";
 
 import { ToggleTheme } from "@/components/ui/toggle-theme";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
         >
           <ToggleTheme className="absolute bottom-0 right-0 m-2 animate__animated animate__fadeInRight" />
           <QueryClientProvider>{children}</QueryClientProvider>
+          <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>
     </html>

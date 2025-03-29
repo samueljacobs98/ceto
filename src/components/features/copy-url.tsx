@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { toast } from "sonner";
 
 export function CopyUrl() {
   const pathname = usePathname();
@@ -31,7 +32,13 @@ export function CopyUrl() {
   }, [pathname, searchParams]);
 
   const handleClick = () => {
-    copy(url);
+    copy(url)
+      .then(() => {
+        toast.success("URL copied to clipboard");
+      })
+      .catch(() => {
+        toast.error("Failed to copy URL to clipboard");
+      });
   };
 
   return (
