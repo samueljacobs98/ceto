@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { CopyIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { useCopyToClipboard } from "@/lib/state/hooks";
 
@@ -13,9 +14,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { toast } from "sonner";
 
-export function CopyUrl() {
+export function CopyUrlButton() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const copy = useCopyToClipboard()[1];

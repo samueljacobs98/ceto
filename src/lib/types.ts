@@ -14,5 +14,4 @@ export type VesselParams = {
   name?: Nullish<string>;
   internalName?: Nullish<string>;
   "particulars.flag"?: Nullish<string>;
-  //   tags: Nullish<string>[];
 };

@@ -118,7 +118,6 @@ function DataTableProvider({ children }: { children: ReactNode }) {
     const name = searchParams.get("name");
     const internalName = searchParams.get("internalName");
     const flag = searchParams.get("particulars.flag");
-    // const tags = searchParams.getAll("tags");
 
     return {
       sortBy,
@@ -146,7 +145,7 @@ function DataTableProvider({ children }: { children: ReactNode }) {
   const pagesCount = useMemo(
     () =>
       data?.meta.total
-        ? Math.ceil(data.meta.total / (filters?.pageSize || 1))
+        ? Math.ceil(data.meta.total / (filters?.pageSize || DEFAULT_PAGE_SIZE))
         : 1,
     [data?.meta.total, filters?.pageSize]
   );
@@ -156,9 +155,10 @@ function DataTableProvider({ children }: { children: ReactNode }) {
     [filters?.pageNumber]
   );
 
-  const canGetNextPage = useMemo(() => {
-    return Boolean(filters?.pageNumber && filters.pageNumber < pagesCount);
-  }, [filters?.pageNumber, pagesCount]);
+  const canGetNextPage = useMemo(
+    () => Boolean(filters?.pageNumber && filters.pageNumber < pagesCount),
+    [filters?.pageNumber, pagesCount]
+  );
 
   const updatePage = (pageNumber: number) => {
     setFilters((prev) => ({ ...prev, pageNumber }));
@@ -184,59 +184,64 @@ function DataTableProvider({ children }: { children: ReactNode }) {
     updatePage(page);
   };
 
-  const handleFilter =
+  const handleFilter = useCallback(
     (key: keyof typeof filters) =>
-    (e: ChangeEvent<HTMLInputElement> | string) => {
-      const value = typeof e === "string" ? e : e.target.value;
-      const resetPageSearchParams = updateSearchParams(
-        "pageNumber",
-        "1",
-        searchParams
-      );
+      (e: ChangeEvent<HTMLInputElement> | string) => {
+        const value = typeof e === "string" ? e : e.target.value;
+        const resetPageSearchParams = updateSearchParams(
+          "pageNumber",
+          "1",
+          searchParams
+        );
 
-      if (!value.trim()) {
-        setFilters((prev) => ({ ...prev, [key]: undefined, page: 1 }));
+        if (!value.trim()) {
+          setFilters((prev) => ({ ...prev, [key]: undefined, page: 1 }));
+          router.push(
+            pathname +
+              "?" +
+              deleteSearchParam(key, resetPageSearchParams).toString()
+          );
+          return;
+        }
+
+        setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
         router.push(
           pathname +
             "?" +
-            deleteSearchParam(key, resetPageSearchParams).toString()
+            updateSearchParams(key, value, resetPageSearchParams).toString()
+        );
+      },
+    [router, pathname, searchParams, updateSearchParams, deleteSearchParam]
+  );
+
+  const handleSortBy = useCallback(
+    (sortByKey: string) => () => {
+      const resetPageSearchParams = updateSearchParams("pageNumber", "1");
+      setFilters((prev) => ({ ...prev, pageNumber: 1 }));
+
+      if (sortBy?.startsWith(sortByKey) && sortBy.endsWith("desc")) {
+        router.push(
+          pathname + "?" + deleteSearchParam("sortBy", resetPageSearchParams)
         );
         return;
       }
 
-      setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
+      const direction = sortBy?.startsWith(sortByKey) ? "desc" : "asc";
+
       router.push(
         pathname +
           "?" +
-          updateSearchParams(key, value, resetPageSearchParams).toString()
+          updateSearchParams(
+            "sortBy",
+            `${sortByKey}:${direction}`,
+            resetPageSearchParams
+          )
       );
-    };
+    },
+    [router, pathname, sortBy, updateSearchParams, deleteSearchParam]
+  );
 
-  const handleSortBy = (sortByKey: string) => () => {
-    const resetPageSearchParams = updateSearchParams("pageNumber", "1");
-    setFilters((prev) => ({ ...prev, pageNumber: 1 }));
-
-    if (sortBy?.startsWith(sortByKey) && sortBy.endsWith("desc")) {
-      router.push(
-        pathname + "?" + deleteSearchParam("sortBy", resetPageSearchParams)
-      );
-      return;
-    }
-
-    const direction = sortBy?.startsWith(sortByKey) ? "desc" : "asc";
-
-    router.push(
-      pathname +
-        "?" +
-        updateSearchParams(
-          "sortBy",
-          `${sortByKey}:${direction}`,
-          resetPageSearchParams
-        )
-    );
-  };
-
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     const resetPageSearchParams = updateSearchParams("pageNumber", "1");
     const searchParams = filters.pageSize
       ? updateSearchParams(
@@ -248,7 +253,7 @@ function DataTableProvider({ children }: { children: ReactNode }) {
 
     setFilters(({ pageSize }) => ({ pageNumber: 1, pageSize }));
     router.push(pathname + "?" + searchParams.toString());
-  };
+  }, [router, pathname, filters?.pageSize, updateSearchParams]);
 
   return (
     <DataTableContext.Provider
@@ -357,7 +362,6 @@ function DataTableToolbar() {
                 placeholder="GB"
               />
             </li>
-            {/* TODO: tags */}
           </ul>
         </PopoverContent>
       </Popover>
@@ -395,7 +399,6 @@ function DataTableHeader() {
             Flag
           </DataTableSortButton>
         </TableHead>
-        <TableHead>Tags</TableHead>
       </TableRow>
     </TableHeader>
   );
@@ -438,13 +441,12 @@ function DataTableBody() {
       {data?.activeVessels.length ? (
         <>
           {data?.activeVessels.map(
-            ({ id, imoNumber, name, internalName, particulars, tags }) => (
+            ({ id, imoNumber, name, internalName, particulars }) => (
               <TableRow key={id}>
                 <TableCell>{imoNumber}</TableCell>
                 <TableCell>{name}</TableCell>
                 <TableCell>{internalName}</TableCell>
                 <TableCell>{particulars?.flag}</TableCell>
-                <TableCell>{tags?.join(", ")}</TableCell>
               </TableRow>
             )
           )}

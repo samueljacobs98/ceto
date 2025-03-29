@@ -10,5 +10,4 @@ export const getVesselsSchema = z.object({
   name: z.string().nullish(),
   internalName: z.string().nullish(),
   flag: z.string().nullish(),
-  // tags: z.array(z.string()).optional(),
 });

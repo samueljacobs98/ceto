@@ -10,7 +10,6 @@ export function validateGetVessels(req: Request) {
   const name = searchParams.get("name");
   const internalName = searchParams.get("internalName");
   const flag = searchParams.get("particulars.flag");
-  // const tags = searchParams.getAll("tags");
 
   return getVesselsSchema.safeParse({
     sortBy,

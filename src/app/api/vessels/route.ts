@@ -1,5 +1,3 @@
-"use server";
-
 import { queryVesselData } from "@/lib/db/queries";
 import { validateGetVessels } from "@/lib/validate";
 

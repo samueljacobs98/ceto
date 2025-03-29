@@ -4,7 +4,7 @@ import { getQueryClient } from "@/lib/api/query-client";
 import { getVesselData } from "@/lib/api/requests";
 import { VesselParams } from "@/lib/types";
 
-import { CopyUrl } from "@/components/features/copy-url";
+import { CopyUrlButton } from "@/components/features/copy-url-button";
 import { DataTable } from "@/components/features/data-table";
 
 export default async function Page({
@@ -28,7 +28,7 @@ export default async function Page({
         <div className="space-y-2">
           <div className="flex items-end gap-2">
             <h1 className="text-3xl font-bold">Vessel Data</h1>
-            <CopyUrl />
+            <CopyUrlButton />
           </div>
           <p className="text-base text-muted-foreground">
             Explore live vessel data
