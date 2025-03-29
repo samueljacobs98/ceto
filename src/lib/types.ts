@@ -2,7 +2,7 @@ import { InferSchemaType } from "mongoose";
 
 import { VesselSchema } from "./db/models";
 
-type Nullish<T> = T | null | undefined;
+export type Nullish<T> = T | null | undefined;
 
 export type Vessel = InferSchemaType<typeof VesselSchema> & { id: string };
 

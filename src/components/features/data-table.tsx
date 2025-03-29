@@ -2,6 +2,7 @@
 
 import {
   ChangeEvent,
+  ComponentProps,
   createContext,
   ReactNode,
   useCallback,
@@ -10,14 +11,20 @@ import {
   useMemo,
   useState,
 } from "react";
-import { ArrowUpDown, FilterIcon, RotateCcwIcon } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  FilterIcon,
+  RotateCcwIcon,
+} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 import { getVesselData } from "@/lib/api/requests";
 import { DEFAULT_PAGE_SIZE } from "@/lib/constants";
-import type { Vessel, VesselParams } from "@/lib/types";
-import { parseToInteger } from "@/lib/utils";
+import type { Nullish, Vessel, VesselParams } from "@/lib/types";
+import { cn, parseToInteger } from "@/lib/utils";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,6 +61,7 @@ const DataTableContext = createContext<
             };
           }
         | undefined;
+      sortBy: Nullish<string>;
       filters: Omit<VesselParams, "sortBy">;
       pagesCount: number;
       canGetPreviousPage: boolean;
@@ -242,6 +250,7 @@ function DataTableProvider({ children }: { children: ReactNode }) {
     <DataTableContext.Provider
       value={{
         data,
+        sortBy,
         filters,
         pagesCount,
         canGetPreviousPage,
@@ -361,54 +370,59 @@ function DataTableToolbar() {
 }
 
 function DataTableHeader() {
-  const { handleSortBy } = useDataTableContext();
-
   return (
     <TableHeader>
       <TableRow>
         <TableHead>
-          <Button
-            variant="ghost"
-            onClick={handleSortBy("imoNumber")}
-            className="pl-2"
-          >
+          <DataTableSortButton sortByKey="imoNumber">
             IMO Number
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          </DataTableSortButton>
         </TableHead>
         <TableHead>
-          <Button
-            variant="ghost"
-            onClick={handleSortBy("name")}
-            className="pl-2"
-          >
-            Name
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <DataTableSortButton sortByKey="name">Name</DataTableSortButton>
         </TableHead>
         <TableHead>
-          <Button
-            variant="ghost"
-            onClick={handleSortBy("internalName")}
-            className="pl-2"
-          >
+          <DataTableSortButton sortByKey="internalName">
             Internal Name
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          </DataTableSortButton>
         </TableHead>
         <TableHead>
-          <Button
-            variant="ghost"
-            onClick={handleSortBy("particulars.flag")}
-            className="pl-2"
-          >
+          <DataTableSortButton sortByKey="particulars.flag">
             Flag
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          </DataTableSortButton>
         </TableHead>
         <TableHead>Tags</TableHead>
       </TableRow>
     </TableHeader>
+  );
+}
+
+function DataTableSortButton({
+  sortByKey,
+  className,
+  children,
+  ...props
+}: ComponentProps<typeof Button> & { sortByKey: string }) {
+  const { sortBy, handleSortBy } = useDataTableContext();
+
+  return (
+    <Button
+      variant="ghost"
+      onClick={handleSortBy(sortByKey)}
+      className={cn("pl-2", className)}
+      {...props}
+    >
+      {children}
+      {sortBy?.startsWith(sortByKey) ? (
+        sortBy.endsWith("asc") ? (
+          <ArrowUp className="ml-2 h-4 w-4" />
+        ) : (
+          <ArrowDown className="ml-2 h-4 w-4" />
+        )
+      ) : (
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      )}
+    </Button>
   );
 }
 
