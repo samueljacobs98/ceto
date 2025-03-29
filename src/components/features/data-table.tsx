@@ -134,8 +134,12 @@ function DataTableProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState({ ...derivedFilters });
 
   const requestData = useDeferredValue({ sortBy, ...derivedFilters });
+  const vesselParamsKey = useMemo(
+    () => searchParams.toString(),
+    [searchParams]
+  );
   const { data } = useQuery({
-    queryKey: ["vessels"],
+    queryKey: ["vessels", vesselParamsKey],
     queryFn: () => getVesselData(requestData),
   });
 
